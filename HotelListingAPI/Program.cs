@@ -1,4 +1,6 @@
+using HotelListingAPI.Configuration;
 using HotelListingAPI.Context;
+using HotelListingAPI.Repository;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
@@ -18,6 +20,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AlllowAll",b => b.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod());
 });
+builder.Services.AddAutoMapper(typeof(AutoMapperConfig));
+
+builder.Services.AddScoped(typeof(IGenericRepository<>),typeof(GenericRepository<>));
+builder.Services.AddScoped<ICountryRepository, CountryRepository>();
 
 var app = builder.Build();
 

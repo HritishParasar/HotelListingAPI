@@ -1,5 +1,8 @@
-﻿using HotelListingAPI.Context;
+﻿using AutoMapper;
+using HotelListingAPI.Context;
 using HotelListingAPI.Data;
+using HotelListingAPI.DTOs.Country;
+using HotelListingAPI.Repository;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,59 +13,54 @@ namespace HotelListingAPI.Controllers
     [ApiController]
     public class CountriesController : ControllerBase
     {
-        private readonly HotelDbContext dbContext;
+        
+        private readonly ICountryRepository repository;
+        private readonly IMapper mapper;
 
-        public CountriesController(HotelDbContext dbContext)
+        public CountriesController(ICountryRepository repository,IMapper mapper)
         {
-            this.dbContext = dbContext;
+            this.repository = repository;
+            this.mapper = mapper;
         }
         [HttpGet("Id")]
         public async Task<ActionResult> GetCountryById(int Id)
         {
-            var country = await dbContext.Countries.FindAsync(Id);
+            var country = await repository.GetCountryDetails(Id);
             if(country == null)
                 return NotFound();
             else
                 return Ok(country);
         }
         [HttpGet]
-        public async Task<ActionResult<List<Country>>> GetAllCountry()
+        public async Task<ActionResult<List<GetCountryDTO>>> GetAllCountry()
         {
-            var countries = await dbContext.Countries.ToListAsync();
+            var countries = await repository.GetAllAsync();
+            var items = mapper.Map<List<GetCountryDTO>>(countries);
             return Ok(countries);   
         }
         [HttpPost]
-        public async Task<ActionResult<Country>> AddCountry(Country country)
+        public async Task<ActionResult<Country>> AddCountry(AddCountryDTO Addcountry)
         {
-            var item = new Country
-            {
-                Id = country.Id,
-                Name = country.Name,
-                ShortName = country.ShortName
-            };
-            await dbContext.AddAsync(item);
-            await dbContext.SaveChangesAsync();
+            var item = mapper.Map<Country>(Addcountry); 
+            await repository.AddAsync(item);
             return Ok("SuccessFully Added!");
         }
         [HttpDelete("Id")]
         public async Task<ActionResult> DeleteCountry(int Id)
         {
-            var country = await dbContext.Countries.FindAsync(Id);
-            dbContext.Countries.Remove(country);
-            await dbContext.SaveChangesAsync();
+            await repository.DeleteAsync(Id);
             return Ok("Successfully Deleted!");
         }
         [HttpPut("Id")]
-        public async Task<ActionResult> UpdateCountry(int Id, Country country)
+        public async Task<ActionResult> UpdateCountry(int Id, UpdateCountryDTO country)
         {
-            if (Id != country.Id)
-                return BadRequest();
-            var find = await dbContext.Countries.FindAsync(Id);
-            find.Id = country.Id;
+
+            var find = await repository.GetByIdAsync(Id);
+            if (find == null)
+                return NotFound();
             find.Name = country.Name;
             find.ShortName = country.ShortName;
-            dbContext.Countries.Update(find);
-            await dbContext.SaveChangesAsync();
+            await repository.UpdateAsync(find);
             return Ok("Successfully Updated!");
         }
     }
