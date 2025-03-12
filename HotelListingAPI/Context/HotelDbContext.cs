@@ -1,9 +1,11 @@
 ﻿using HotelListingAPI.Data;
+using HotelListingAPI.Data.Configuration;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace HotelListingAPI.Context
 {
-    public class HotelDbContext : DbContext
+    public class HotelDbContext : IdentityDbContext<ApiUser>
     {
         public HotelDbContext(DbContextOptions options) : base(options)
         {
@@ -14,6 +16,7 @@ namespace HotelListingAPI.Context
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            modelBuilder.ApplyConfiguration(new RoleConfiguration());
             modelBuilder.Entity<Country>().HasData(
                 new Country { 
                   Id = 1,
